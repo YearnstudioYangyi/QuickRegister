@@ -29,10 +29,10 @@ jobs:
 
     - name: Check if main.py exists
       run: |
-        if [ ! -f main.py ]; then
-          echo "main.py does not exist!"
+        if (-Not (Test-Path -Path "main.py")) {
+          Write-Host "main.py does not exist!"
           exit 1
-        fi
+        }
 
     - name: Install dependencies from main.py
       run: |
