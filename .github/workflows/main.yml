@@ -1,0 +1,61 @@
+name: Build and Package with PyInstaller
+
+on:
+  push:
+    branches:
+      - main  # 你可以根据需要更改分支名称
+  pull_request:
+    branches:
+      - main  # 你可以根据需要更改分支名称
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.8'
+
+    - name: Upgrade pip and install pip-tools
+      run: |
+        python -m pip install --upgrade pip
+        pip install pip-tools
+
+    - name: Check if main.py exists
+      run: |
+        if [ ! -f main.py ]; then
+          echo "main.py does not exist!"
+          exit 1
+        fi
+
+    - name: Install dependencies from main.py
+      run: |
+        pip install -r requirements.txt || pip install -r <(pipreqs .) || true
+
+    - name: Auto Create requirements.txt
+      run: |
+        pip-compile --output-file requirements.txt
+
+    - name: Sync dependencies with pip-sync
+      run: |
+        pip-sync requirements.txt
+
+    - name: Install PyInstaller
+      run: |
+        pip install pyinstaller
+
+    - name: Build with PyInstaller
+      run: |
+        pyinstaller --onefile main.py
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v2
+      with:
+        name: main.exe
+        path: dist/main.exe
