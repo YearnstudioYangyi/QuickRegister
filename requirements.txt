@@ -1,0 +1,6 @@
+base64
+requests
+json
+random
+tkinter
+Pillow==9.5.0
