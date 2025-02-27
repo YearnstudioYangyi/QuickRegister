@@ -34,22 +34,9 @@ jobs:
           exit 1
         }
 
-    - name: Install dependencies from main.py
+    - name: Install dependencies from requirements.txt
       run: |
-        if (Test-Path -Path "requirements.txt") {
-          pip install -r requirements.txt
-        } else {
-          pipreqs . --force
-          pip install -r requirements.txt
-        }
-
-    - name: Auto Create requirements.txt
-      run: |
-        pip-compile requirements.in --output-file requirements.txt
-
-    - name: Sync dependencies with pip-sync
-      run: |
-        pip-sync requirements.txt
+        pip install -r requirements.txt
 
     - name: Install PyInstaller
       run: |
@@ -63,4 +50,4 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: main.exe
-        path: dist/main.py
+        path: dist/main.exe
