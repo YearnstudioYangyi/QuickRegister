@@ -45,7 +45,7 @@ jobs:
 
     - name: Auto Create requirements.txt
       run: |
-        pip-compile --output-file requirements.txt
+        pip-compile requirements.in --output-file requirements.txt
 
     - name: Sync dependencies with pip-sync
       run: |
@@ -63,4 +63,4 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: main.exe
-        path: dist/main.exe
+        path: dist/main.py
