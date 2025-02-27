@@ -1,4 +1,5 @@
 import base64
+from re import match
 from time import sleep
 import requests
 import json
@@ -44,7 +45,7 @@ def show_image_and_get_code():
     root = tk.Tk()
     # 窗口居中
     root.geometry("+%d+%d" % (root.winfo_screenwidth() // 2 - 200, root.winfo_screenheight() // 2 - 100))
-    root.title("验证码输入")
+    root.title("验证码")
     
     image = Image.open('./pic.jpg')
     photo = ImageTk.PhotoImage(image)
@@ -93,7 +94,40 @@ def main():
     accout = input('请输入账号:')
     password = input('请输入密码:')
     new_passwd = input('请输入新密码(已修改留空):')
-    
+    if len(str(accout)) != 13:
+        print('账号长度错误')
+        return
+    if len(str(password)) == 8:
+        print('长度为8，应为初始密码，开始检测')
+        if password[4] == '1':
+            print('对于初始密码，第5位是字母l，而不是数字1')
+            while True:
+                sure = input('确定自动修改吗？(y/n)')
+                if sure == 'y':
+                    new_passwd = str(password)[0:4] + 'l' + str(password)[5:]
+                    break
+                elif sure == 'n':
+                    print('已取消修改')
+                    break
+                else:
+                    print('输入错误')
+                    continue
+        if password == '':
+            print('密码不能为空')
+            return
+        if password[7] == '0':
+            print('对于初始密码，第8位是字母O，而不是数字0')
+            while True:
+                sure = input('确定自动修改吗？(y/n)')
+                if sure == 'y':
+                    password = password[:6] + 'O'
+                    break
+                elif sure == 'n':
+                    print('已取消修改')
+                    break
+                else:
+                    print('输入错误')
+    print('自动修正部分结束，最终密码为：', password, '\n')
     JSESSION = get_validate_code()
     if not JSESSION:
         return
@@ -113,7 +147,7 @@ def main():
             data = {"oldPwd": password, "newPwd": new_passwd, "token": token}
             url = "https://www.sneac.edu.cn/xuekao/gzxyks_student/modifypwd"
             response = requests.post(url, headers=headers, data=json.dumps(data))
-            print(f"修改密码响应: {response.json().get('desc')}")
+            print(f"修改密码响应: {response.json().get('recode_desc')}")
         
             print('修改完成')
             print('正在重新获取Token')
@@ -123,6 +157,13 @@ def main():
                 print("获取验证码失败，请重试")
                 return
             code = show_image_and_get_code()
+            while True:
+                if code == "":
+                    print("验证码为空，请重新输入")
+                    code = show_image_and_get_code()
+                    continue
+                elif len(str(code)) == 4:
+                    break
             url = "https://www.sneac.edu.cn/xuekao/gzxyks_student/login"
             data = encode_credentials(accout, password, code)
             re = requests.post(url, headers=headers, data=json.dumps(data), cookies={"JSESSIONID": JSESSION}).json()
@@ -140,8 +181,24 @@ def main():
             print("1. 提交信息")
             url = "https://www.sneac.edu.cn/xuekao/gzxyks_student/student/info/first/confirm"
             confirm['phoneOne'] = input('请输入手机号:')
+            #判断手机号格式是否正确
+            if not match(r'^1[3-9]\d{9}$', confirm['phoneOne']):
+                print('手机号格式不正确，请重新输入')
+                while True:
+                    confirm['phoneOne'] = input('请输入手机号:')
+                    if match(r'^1[3-9]\d{9}$', confirm['phoneOne']):
+                        break
+                    else:
+                        print('手机号格式不正确，请重新输入')
             confirm['phoneTwo'] = input('请输入手机号2(没有请留空):')
-            
+            if not(confirm['phoneTwo'] == '' or match(r'^1[3-9]\d{9}$', confirm['phoneOne'])):
+                print('手机号格式不正确，请重新输入')
+                while True:
+                    confirm['phoneTwo'] = input('请输入手机号2(没有请留空):')
+                    if match(r'^1[3-9]\d{9}$', confirm['phoneTwo']) or confirm['phoneTwo'] == '':
+                        break
+                    else:
+                        print('手机号格式不正确，请重新输入(留空表示不绑定)')
             re = requests.post(url, headers=headers, data=json.dumps(confirm))
             print(re.json().get('recode_desc'))
             
@@ -201,6 +258,6 @@ def main():
         print(f'[Info]调试信息{re}')
 
 if __name__ == "__main__":
-    print('水平考试自动报名工具 v1.0 by 阳毅')
+    print('水平考试自动报名工具 v1.1 by 阳毅')
     print('适用于物化生、物化地、物化政组合\n')
     main()
